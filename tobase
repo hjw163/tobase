@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
@@ -11,7 +11,7 @@ if [[ ! "${oBase}" ]]; then
     echo
     echo "Really simple bc wrapper script to convert between number bases."
     echo
-    echo "Usage: $(basename ${0}) <oBase> <<< 0{x|b|o|[d]}..."
+    echo "Usage: $(basename "${0}") <oBase> <<< 0{x|b|o|[d]}..."
     echo "Returns: The current number converted to <oBase>"
     echo
     echo "Binary output is padded to multiple of 1byte(8bits)"
@@ -22,11 +22,11 @@ declare -A supportedBase=( [2]=1 [8]=1 [10]=1 [16]=1 )
 
 if [[ ! "${supportedBase[${oBase}]}" ]]; then
     echo "Error: unsupported base value: ${oBase}"
-    echo "Supported bases: ${!supportedBase[@]}"
+    echo "Supported bases: ${!supportedBase[*]}"
     exit 1
 fi
 
-read stdin
+read -r stdin
 
 stdin="${stdin^^}"
 
@@ -63,7 +63,7 @@ output=$(echo "${params}" | bc)
 outputLen="${#output}"
 
 if [[ "${oBase}" == 2 && $(( "${outputLen}" % 8 )) != 0 ]]; then
-    lenDiff=$(( (8 - ("${outputLen}" % 8)) ))
+    lenDiff=$(( 8 - ("${outputLen}" % 8) ))
     for ((i=0;i<lenDiff;i++)); do
         output="0${output}"
     done
