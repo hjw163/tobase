@@ -1,0 +1,72 @@
+#!/bin/bash
+
+set -e
+
+hash bc
+
+oBase="${1}"
+
+if [[ ! "${oBase}" ]]; then
+    echo "Error: empty base value"
+    echo
+    echo "Really simple bc wrapper script to convert between number bases."
+    echo
+    echo "Usage: $(basename ${0}) <oBase> <<< 0{x|b|o|[d]}..."
+    echo "Returns: The current number converted to <oBase>"
+    echo
+    echo "Binary output is padded to multiple of 1byte(8bits)"
+    exit 1
+fi
+
+declare -A supportedBase=( [2]=1 [8]=1 [10]=1 [16]=1 )
+
+if [[ ! "${supportedBase[${oBase}]}" ]]; then
+    echo "Error: unsupported base value: ${oBase}"
+    echo "Supported bases: ${!supportedBase[@]}"
+    exit 1
+fi
+
+read stdin
+
+stdin="${stdin^^}"
+
+shopt -s extglob
+
+case "${stdin}" in
+
+    0X+([0-9A-F]) )
+        val="${stdin:2}"
+        iBase=16
+    ;;
+    0B+([01]) )
+        val="${stdin:2}"
+        iBase=2
+    ;;
+    0O+([0-7]) )
+        val="${stdin:2}"
+        iBase=8
+    ;;
+    ?(0D)+([0-9]) )
+        val="${stdin}"
+        iBase=10
+    ;;
+    * )
+        echo "Error: Unknown number format: ${stdin}"
+        exit 1
+    ;;
+
+esac
+
+params="obase=${oBase}; ibase=${iBase}; ${val}"
+
+output=$(echo "${params}" | bc)
+outputLen="${#output}"
+
+if [[ "${oBase}" == 2 && $(( "${outputLen}" % 8 )) != 0 ]]; then
+    lenDiff=$(( (8 - ("${outputLen}" % 8)) ))
+    for ((i=0;i<lenDiff;i++)); do
+        output="0${output}"
+    done
+fi
+
+echo "${output}"
